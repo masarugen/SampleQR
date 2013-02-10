@@ -41,8 +41,8 @@ public class SampleQrActivity extends Activity implements SurfaceHolder.Callback
     private Camera mCamera;
     private SurfaceView mSurfaceView;
     private Point mPreviewSize;
-    private float mPreviewWidthRaito;
-    private float mPreviewHeightRaito;
+    private float mPreviewWidthRatio;
+    private float mPreviewHeightRatio;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -80,10 +80,12 @@ public class SampleQrActivity extends Activity implements SurfaceHolder.Callback
 
     @Override
     public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-        Camera.Parameters parameters = mCamera.getParameters();
-        parameters.setPreviewSize(mPreviewSize.x, mPreviewSize.y);
-        mCamera.setParameters(parameters);
-        mCamera.startPreview();
+        if (mCamera != null) {
+            Camera.Parameters parameters = mCamera.getParameters();
+            parameters.setPreviewSize(mPreviewSize.x, mPreviewSize.y);
+            mCamera.setParameters(parameters);
+            mCamera.startPreview();
+        }
     }
 
     @Override
@@ -121,7 +123,7 @@ public class SampleQrActivity extends Activity implements SurfaceHolder.Callback
         Display display = manager.getDefaultDisplay();
         int screenWidth = display.getWidth();
         int screenHeight = display.getHeight();
-        float screenAspectRaito = (float) screenWidth / (float) screenHeight;
+        float screenAspectRatio = (float) screenWidth / (float) screenHeight;
         Point bestSize = null;
         float diff = Float.POSITIVE_INFINITY;
         for (Size supportPreviewSize : supportPreviewSizes) {
@@ -136,12 +138,12 @@ public class SampleQrActivity extends Activity implements SurfaceHolder.Callback
             int previewHeight = isPortrait ? supportWidth : supportHeight;
             if (previewWidth == screenWidth && previewHeight == screenHeight) {
                 mPreviewSize = new Point(supportWidth, supportHeight);
-                mPreviewWidthRaito = 1;
-                mPreviewHeightRaito = 1;
+                mPreviewWidthRatio = 1;
+                mPreviewHeightRatio = 1;
                 return;
             }
-            float aspectRaito = (float) previewWidth / (float) previewHeight;
-            float newDiff = Math.abs(aspectRaito - screenAspectRaito);
+            float aspectRatio = (float) previewWidth / (float) previewHeight;
+            float newDiff = Math.abs(aspectRatio - screenAspectRatio);
             if (newDiff < diff) {
                 bestSize = new Point(supportWidth, supportHeight);
                 diff = newDiff;
@@ -152,20 +154,18 @@ public class SampleQrActivity extends Activity implements SurfaceHolder.Callback
             bestSize = new Point(defaultSize.width, defaultSize.height);
         }
         mPreviewSize = bestSize;
-        mPreviewWidthRaito = (float) mPreviewSize.x / (float) screenWidth;
-        mPreviewHeightRaito = (float) mPreviewSize.y / (float) screenHeight;
+        mPreviewWidthRatio = (float) mPreviewSize.x / (float) screenWidth;
+        mPreviewHeightRatio = (float) mPreviewSize.y / (float) screenHeight;
     }
 
     @Override
     public void onPreviewFrame(byte[] data, Camera camera) {
         Result rawResult = null;
         View target = (View) findViewById(R.id.target);
-        int left = (int) (target.getLeft() * mPreviewWidthRaito);
-        int top = (int) (target.getTop() * mPreviewHeightRaito);
-        int width = (int) (target.getWidth() * mPreviewWidthRaito);
-        int height = (int) (target.getHeight() * mPreviewHeightRaito);
-        Log.d(TAG, mPreviewWidthRaito + ":" + mPreviewHeightRaito + ":" + left + ":" + top + ":"
-                + width + ":" + height);
+        int left = (int) (target.getLeft() * mPreviewWidthRatio);
+        int top = (int) (target.getTop() * mPreviewHeightRatio);
+        int width = (int) (target.getWidth() * mPreviewWidthRatio);
+        int height = (int) (target.getHeight() * mPreviewHeightRatio);
         PlanarYUVLuminanceSource source = new PlanarYUVLuminanceSource(data, mPreviewSize.x,
                 mPreviewSize.y, left, top, width, height, false);
         if (source != null) {
